@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../../build/models",
+    "noImplicitReturns": false
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules"]
+}

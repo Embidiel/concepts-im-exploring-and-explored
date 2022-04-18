@@ -1,0 +1,21 @@
+
+syntax = "proto3";
+
+package UploaderPackage;
+
+service UploaderPackage {
+  rpc uploadFile (FileRequest) returns (GenericResponse);
+  rpc uploadFileStream (stream FileRequest) returns (GenericResponse) {}
+}
+
+message FileRequest {
+  oneof filedata {
+    string filename = 1;
+    bytes file = 2;
+  }
+}
+
+message GenericResponse {
+    int32 code = 1;
+    string message = 2;
+}
