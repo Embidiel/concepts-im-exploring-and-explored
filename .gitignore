@@ -77,3 +77,9 @@ jspm_packages/
 
 # FuseBox cache
 .fusebox/
+
+
+perf-test-grpc-restapi/grpc-test/files
+perf-test-grpc-restapi/grpc-test/tobeuploaded
+perf-test-grpc-restapi/rest-api/tobeuploaded
+perf-test-grpc-restapi/rest-api/files
