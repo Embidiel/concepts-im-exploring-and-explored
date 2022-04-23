@@ -15,7 +15,7 @@ const EVENTS = {
   ERROR: "error",
 };
 
-let firstNameToBeSearched = "";
+let personToBeSearched = {};
 
 pool.on(EVENTS.ERROR, (err, client) => {
   console.error("Unexpected error on idle client", err);
@@ -32,8 +32,8 @@ const generatedDummyRecords = async (len = 100) => {
     const record = [first_name, last_name, city];
 
     if (ctr === picked) {
-      firstNameToBeSearched = first_name;
-      console.log(`Lucky: `, firstNameToBeSearched);
+      personToBeSearched = { picked, first_name, last_name, city };
+      console.log(`Lucky! : `, personToBeSearched);
     }
 
     records.push(record);
@@ -94,7 +94,7 @@ const selectRows = async (
   }
 
   try {
-    const escaped = pgformat(qry, data);
+    const escaped = pgformat(qry, ...data);
     const res = await rdbmsClient.query(escaped);
     return res;
   } catch (err) {
@@ -114,7 +114,27 @@ const createIndex = async (rdbmsClient, idxName, tableName, columns) => {
   }
 };
 
-const dropTable = async () => {};
+const dropIndex = async (rdbmsClient, indexName) => {
+  const qry = `DROP INDEX ${indexName}`;
+
+  try {
+    const res = await rdbmsClient.query(qry);
+    return res;
+  } catch (err) {
+    throw { fname: `dropIndex`, err };
+  }
+};
+
+const dropTable = async (rdbmsClient, tableName) => {
+  const qry = `DROP TABLE ${tableName}`;
+
+  try {
+    const res = await rdbmsClient.query(qry);
+    return res;
+  } catch (err) {
+    throw { fname: `dropTable`, err };
+  }
+};
 
 const TABLE_NAME = "Person";
 const DT_VARCHAR = (len = 255) => `varchar(${len})`;
@@ -139,38 +159,94 @@ const start = async () => {
       records
     );
 
-    const { rows: rowsPreIndex } = await selectRows(
+    const { rows: rowsPreSingleColIndex } = await selectRows(
       client,
       TABLE_NAME,
       `first_name`,
       `first_name = %L`,
-      firstNameToBeSearched,
+      personToBeSearched.first_name,
       true
     );
     console.log(
       `Normal / No Index Search / Full Table Search`,
-      rowsPreIndex[4]
+      rowsPreSingleColIndex[rowsPreSingleColIndex.length - 1]
     );
 
-    const index = await createIndex(
+    const singleColIndex = await createIndex(
       client,
       `idx_first_name`,
       TABLE_NAME,
       `(first_name)`
     );
 
-    console.log(`Created index`);
+    console.log(`Created single column index`);
 
-    const { rows: rowsPostIndex } = await selectRows(
+    const { rows: rowsPostSingleColIndex } = await selectRows(
       client,
       TABLE_NAME,
       `first_name`,
       `first_name = %L`,
-      firstNameToBeSearched,
+      personToBeSearched.first_name,
       true
     );
 
-    console.log(`Indexed`, rowsPostIndex[6]);
+    console.log(
+      `Single Column Indexed`,
+      rowsPostSingleColIndex[rowsPostSingleColIndex.length - 1]
+    );
+
+    const droppedSingleColIndex = await dropIndex(client, "idx_first_name");
+    console.log(`Dropped Single Col Index`);
+
+    // Compound Index
+
+    const { rows: rowsPreCompoundIndex } = await selectRows(
+      client,
+      TABLE_NAME,
+      `last_name, first_name, city`,
+      `last_name = %L AND first_name = %L AND city = %L`,
+      [
+        personToBeSearched.last_name,
+        personToBeSearched.first_name,
+        personToBeSearched.city,
+      ],
+      true
+    );
+
+    console.log(
+      `Pre Compound Index :`,
+      rowsPreCompoundIndex[rowsPreCompoundIndex.length - 1]
+    );
+
+    const compountIndex = await createIndex(
+      client,
+      `idx_last_name_first_name_city`,
+      TABLE_NAME,
+      `(last_name, first_name, city)`
+    );
+
+    console.log(`Created Compound Index`)
+
+    const { rows: rowsPostCompoundIndex } = await selectRows(
+      client,
+      TABLE_NAME,
+      `last_name, first_name, city`,
+      `last_name = %L AND first_name = %L AND city = %L`,
+      [
+        personToBeSearched.last_name,
+        personToBeSearched.first_name,
+        personToBeSearched.city,
+      ],
+      true
+    );
+
+    console.log(
+      `Compound Index :`,
+      rowsPostCompoundIndex[rowsPostCompoundIndex.length - 1]
+    );
+
+    const droppedTable = await dropTable(client, TABLE_NAME);
+    console.log(`Dropped Table ${TABLE_NAME}`);
   } catch (err) {
     console.error(err);
   } finally {
