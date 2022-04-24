@@ -151,7 +151,7 @@ const start = async () => {
     );
 
     //console.log(`Table Created ${table}`);
-    const records = await generatedDummyRecords(100000);
+    const records = await generatedDummyRecords(1000000);
     const inserted = await insertRows(
       client,
       TABLE_NAME,
@@ -245,8 +245,8 @@ const start = async () => {
       rowsPostCompoundIndex[rowsPostCompoundIndex.length - 1]
     );
 
-    const droppedTable = await dropTable(client, TABLE_NAME);
-    console.log(`Dropped Table ${TABLE_NAME}`);
+    // const droppedTable = await dropTable(client, TABLE_NAME);
+    // console.log(`Dropped Table ${TABLE_NAME}`);
   } catch (err) {
     console.error(err);
   } finally {
