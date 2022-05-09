@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "inversify": "^6.0.1",
+    "reflect-metadata": "^0.1.13"
+  },
+  "name": "inversifyjs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"node ./build/index.js\""
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
